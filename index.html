@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horário Automático ISPGAYA</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+    }
+
+    #openBtn {
+      position: absolute;
+      bottom: 40px;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      background: #0078ff;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease;
+      z-index: 2;
+    }
+
+    #openBtn:hover {
+      transform: scale(1.05);
+    }
+
+    #msg {
+      position: absolute;
+      top: 20px;
+      font-size: 1.2rem;
+      color: #fff;
+      text-align: center;
+      z-index: 2;
+    }
+
+    iframe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      display: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
+  <button id="openBtn">Abrir Horário</button>
+  <iframe id="viewer"></iframe>
+
+  <script>
+    
+
+    const dayLinks = {
+      1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html",
+      2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html",
+      3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html",
+      4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html",
+      5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html"
+    };
+
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+    const viewer = document.getElementById("viewer");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("openBtn");
+
+    function getTodayUrl() {
+      const day = new Date().getDay();
+      return dayLinks[day] || null;
+    }
+
+    function updateSchedule() {
+      viewer.src = "";
+      const today = new Date();
+      const day = today.getDay();
+
+      const url = getTodayUrl();
+
+      if (!url) {
+        msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
+        msg.style.display = "block";
+        viewer.src = "";
+        viewer.style.display = "none";
+        return;
+      }
+
+      msg.textContent = `Horário de ${dayNames[day]}`;
+      msg.style.display = "none";
+      viewer.src = `/proxy?url=${encodeURIComponent(url)}`;
+      viewer.style.display = "block";
+
+    }
+
+    function openFullscreen() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    }
+
+    function scheduleMidnightUpdate() {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 5, 0);
+      const msUntilMidnight = nextMidnight - now;
+
+      setTimeout(() => {
+        updateSchedule();
+        scheduleMidnightUpdate();
+      }, msUntilMidnight);
+    }
+
+    btn.addEventListener("click", () => {
+      openFullscreen();
+      btn.style.display = "none";
+      updateSchedule();
+      scheduleMidnightUpdate();
+    });
+
+  </script>
+
+</body>
+
+</html>
