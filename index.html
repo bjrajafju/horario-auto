@@ -1,30 +1,23 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Horário Automático ISPGAYA</title>
   <style>
     html,
     body {
       margin: 0;
-      height: 100%;
+      padding: 0;
       width: 100%;
-      background: linear-gradient(135deg, #f4f4f9, #e6ecf5);
+      height: 100%;
+      background: #000;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: system-ui, sans-serif;
-      overflow: hidden;
-    }
-
-    #msg {
-      position: absolute;
-      top: 20px;
-      font-size: 1.2rem;
-      color: #444;
-      z-index: 2;
     }
 
     #openBtn {
@@ -37,7 +30,7 @@
       background: #0078ff;
       color: white;
       cursor: pointer;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       transition: transform 0.2s ease;
       z-index: 2;
     }
@@ -46,144 +39,105 @@
       transform: scale(1.05);
     }
 
-    iframe {
+    #msg {
       position: absolute;
+      top: 20px;
+      font-size: 1.2rem;
+      color: #fff;
+      text-align: center;
+      z-index: 2;
+    }
+
+    iframe {
+      position: fixed;
       top: 0;
       left: 0;
+      width: 100vw;
+      height: 100vh;
       border: none;
-      background: white;
-      width: 1920px;
-      height: 1080px;
-      transform-origin: top left;
-      overflow: hidden;
+      display: none;
+      z-index: 1;
     }
   </style>
 </head>
 
 <body>
+
   <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
   <button id="openBtn">Abrir Horário</button>
-  <iframe id="viewer" allowfullscreen></iframe>
+  <iframe id="viewer"></iframe>
 
   <script>
+    
+
     const dayLinks = {
-      1: "days/Horário diário da sala 2 - Semana 01_09_2025 - Segunda.html",
-      2: "days/Horário diário da sala 2 - Semana 01_09_2025 - Terça.html",
-      3: "days/Horário diário da sala 2 - Semana 01_09_2025 - Quarta.html",
-      4: "days/Horário diário da sala 2 - Semana 01_09_2025 - Quinta.html",
-      5: "days/Horário diário da sala 2 - Semana 01_09_2025 - Sexta.html",
+      1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html",
+      2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html",
+      3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html",
+      4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html",
+      5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html"
     };
+
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
     const viewer = document.getElementById("viewer");
     const msg = document.getElementById("msg");
     const btn = document.getElementById("openBtn");
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
     function getTodayUrl() {
-      const today = new Date();
-      const day = today.getDay();
+      const day = new Date().getDay();
       return dayLinks[day] || null;
     }
 
-    async function loadAndAdapt(url) {
-      try {
-        const response = await fetch(url);
-        const html = await response.text();
+    function updateSchedule() {
+      viewer.src = "";
+      const today = new Date();
+      const day = today.getDay();
 
-        // cria um documento temporário para manipular
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+      const url = getTodayUrl();
 
-        // remove estilos antigos que possam causar scroll
-        const oldStyles = doc.querySelectorAll("style, link[rel='stylesheet']");
-        oldStyles.forEach(s => s.remove());
-
-        // pega o conteúdo principal
-        const main = doc.body.innerHTML;
-
-        // cria novo HTML limpo e escalável
-        const newHtml = `
-        <html>
-          <head>
-            <style>
-              html, body {
-                margin: 0;
-                padding: 0;
-                overflow: hidden;
-                height: 100vh;
-                width: 100vw;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: white;
-              }
-              .content {
-                transform-origin: top left;
-                scale: ${calcScale()};
-              }
-              table {
-                max-width: 100%;
-                height: auto;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="content">
-              ${main}
-            </div>
-          </body>
-        </html>
-      `;
-
-        // cria um blob temporário para injetar no iframe
-        const blob = new Blob([newHtml], { type: "text/html" });
-        const blobUrl = URL.createObjectURL(blob);
-        viewer.src = blobUrl;
-
-      } catch (e) {
-        console.error("Erro ao carregar ficheiro:", e);
+      if (!url) {
+        msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
+        msg.style.display = "block";
+        viewer.src = "";
+        viewer.style.display = "none";
+        return;
       }
-    }
 
-    function calcScale() {
-      const baseWidth = 1920;
-      const baseHeight = 1080;
-      const scaleX = window.innerWidth / baseWidth;
-      const scaleY = window.innerHeight / baseHeight;
-      return Math.min(scaleX, scaleY).toFixed(3);
+      msg.textContent = `Horário de ${dayNames[day]}`;
+      msg.style.display = "none";
+      viewer.src = `/proxy?url=${encodeURIComponent(url)}`;
+      viewer.style.display = "block";
+
     }
 
     function openFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) elem.requestFullscreen();
       else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
 
-    function updateSchedule() {
-      const today = new Date();
-      const day = today.getDay();
-      if (day === 0 || day === 6) {
-        msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
-        viewer.style.display = "none";
-      } else {
-        msg.textContent = `Horário de ${dayNames[day]}`;
-        viewer.style.display = "block";
-        loadAndAdapt(getTodayUrl());
-      }
+    function scheduleMidnightUpdate() {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 5, 0);
+      const msUntilMidnight = nextMidnight - now;
+
+      setTimeout(() => {
+        updateSchedule();
+        scheduleMidnightUpdate();
+      }, msUntilMidnight);
     }
 
     btn.addEventListener("click", () => {
       openFullscreen();
       btn.style.display = "none";
-      msg.style.display = "none";
       updateSchedule();
+      scheduleMidnightUpdate();
     });
 
-    window.addEventListener("resize", () => {
-      if (viewer.src) loadAndAdapt(getTodayUrl());
-    });
   </script>
-
 
 </body>
 
