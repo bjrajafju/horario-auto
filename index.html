@@ -31,15 +31,31 @@
       font-size: 0.9rem;
       color: #666;
     }
+    button {
+      margin-top: 1rem;
+      background: #0054a6;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #00448a;
+    }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2 id="msg">A abrir o horário...</h2>
-    <p id="submsg"></p>
+    <h2 id="msg">Horário Automático ISPGAYA</h2>
+    <p id="submsg">Clique abaixo para abrir em ecrã inteiro e carregar o horário de hoje.</p>
+    <button id="btnAbrir">Abrir Horário</button>
   </div>
 
   <script>
+    // Links para cada dia da semana (1=Segunda, 6=Sábado)
     const dayLinks = {
       1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html?638978632738934779",
       2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html?638978632738934779",
@@ -51,7 +67,8 @@
 
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-    window.addEventListener("load", () => {
+    // Função que abre o horário certo
+    function abrirHorario() {
       const today = new Date();
       const day = today.getDay();
       const msg = document.getElementById("msg");
@@ -59,13 +76,52 @@
 
       if (day === 0) {
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
-        sub.textContent = "Volta amanhã";
-      } else {
-        msg.textContent = `Hoje é ${dayNames[day]}`;
-        sub.textContent = "A abrir o horário...";
-        setTimeout(() => window.location.href = dayLinks[day], 1200);
+        sub.textContent = "Volta amanhã 😊";
+        return;
       }
+
+      msg.textContent = `Hoje é ${dayNames[day]}!`;
+      sub.textContent = "A abrir o horário...";
+      setTimeout(() => (window.location.href = dayLinks[day]), 1000);
+    }
+
+    // Quando clicar no botão
+    document.getElementById("btnAbrir").addEventListener("click", async () => {
+      // Tenta entrar em ecrã inteiro
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          await document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+          await document.documentElement.msRequestFullscreen();
+        }
+      } catch (e) {
+        console.warn("Erro ao entrar em fullscreen:", e);
+      }
+
+      abrirHorario();
     });
+
+    // ⏰ Atualização automática à meia-noite
+    function agendarAtualizacaoDiaria() {
+      const agora = new Date();
+      const proximaMeiaNoite = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate() + 1,
+        0, 0, 5 // 00:00:05
+      );
+      const tempoAteMeiaNoite = proximaMeiaNoite - agora;
+
+      setTimeout(() => {
+        console.log("Novo dia — a atualizar horário...");
+        window.location.reload(); // recarrega a página para abrir o novo dia
+      }, tempoAteMeiaNoite);
+    }
+
+    // Inicia o agendamento quando o site carrega
+    window.addEventListener("load", agendarAtualizacaoDiaria);
   </script>
 </body>
 </html>
