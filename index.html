@@ -2,29 +2,41 @@
 <html lang="pt">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Horário Automático ISPGAYA</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f9;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #f4f4f9, #e6ecf5);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
       color: #333;
     }
     .card {
       background: white;
       padding: 2rem 3rem;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      border-radius: 20px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
       text-align: center;
+      max-width: 350px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 0.9rem;
+      color: #666;
     }
   </style>
 </head>
 <body>
   <div class="card">
     <h2 id="msg">A abrir o horário...</h2>
+    <p id="submsg"></p>
   </div>
 
   <script>
@@ -34,25 +46,26 @@
       3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html?638978632738934779",
       4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html?638978632738934779",
       5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html?638978632738934779",
-      6: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_5_Sabado.html?638978632738934779",
+      6: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_5_Sabado.html?638978632738934779"
     };
 
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-    window.onload = () => {
+    window.addEventListener("load", () => {
       const today = new Date();
       const day = today.getDay();
       const msg = document.getElementById("msg");
+      const sub = document.getElementById("submsg");
 
       if (day === 0) {
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
+        sub.textContent = "Volta amanhã 😊";
       } else {
-        const url = dayLinks[day];
-        msg.textContent = `A abrir o horário de ${dayNames[day]}...`;
-        setTimeout(() => window.location.href = url, 1500);
+        msg.textContent = `Hoje é ${dayNames[day]}!`;
+        sub.textContent = "A abrir o horário...";
+        setTimeout(() => window.location.href = dayLinks[day], 1200);
       }
-    };
+    });
   </script>
 </body>
 </html>
-
