@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>Horário Automático ISPGAYA</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #f5f5f5;
+      }
+      .card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2 id="msg">A abrir o horário...</h2>
+    </div>
+
+    <script>
+      async function openCorrectDay() {
+        const today = new Date();
+        const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const diaNome = dias[today.getDay()];
+
+        const urlBase = "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/";
+        const novaAba = window.open(urlBase, "_blank");
+
+        document.getElementById("msg").textContent = `A abrir o horário de ${diaNome}...`;
+
+        // Espera um pouco para o site carregar
+        await new Promise(r => setTimeout(r, 4000));
+
+        try {
+          // Tenta clicar automaticamente no botão correspondente
+          novaAba.eval(`
+            (function() {
+              const botoes = document.querySelectorAll('button, a, div');
+              for (const b of botoes) {
+                if (b.textContent && b.textContent.includes('${diaNome}')) {
+                  b.click();
+                  break;
+                }
+              }
+            })();
+          `);
+        } catch (e) {
+          console.warn("O navegador bloqueou a injeção automática — o utilizador terá de clicar manualmente.");
+        }
+      }
+
+      window.onload = openCorrectDay;
+    </script>
+  </body>
+</html>
