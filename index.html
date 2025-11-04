@@ -1,127 +1,116 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Horário Automático ISPGAYA</title>
   <style>
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #f4f4f9, #e6ecf5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      color: #333;
+    html,body { height:100%; margin:0; font-family:system-ui,Arial; }
+    .center {
+      height:100%; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#f4f4f9,#e6ecf5);
     }
-    .card {
-      background: white;
-      padding: 2rem 3rem;
-      border-radius: 20px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 350px;
-    }
-    h2 {
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      font-size: 0.9rem;
-      color: #666;
-    }
-    button {
-      margin-top: 1rem;
-      background: #0054a6;
-      color: white;
-      border: none;
-      padding: 0.7rem 1.5rem;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover {
-      background: #00448a;
-    }
+    .card{ background:#fff; padding:20px; border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.12); text-align:center; max-width:420px }
+    button{ margin-top:12px; padding:10px 18px; border-radius:10px; border:none; background:#0054a6; color:#fff; cursor:pointer }
+    #viewer { display:none; width:100vw; height:100vh; border:0; }
+    #err { color:#b00; margin-top:10px; font-size:.9rem }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2 id="msg">Horário Automático ISPGAYA</h2>
-    <p id="submsg">Clique abaixo para abrir em ecrã inteiro e carregar o horário de hoje.</p>
-    <button id="btnAbrir">Abrir Horário</button>
+  <div id="start" class="center">
+    <div class="card">
+      <h2 id="msg">Horário Automático ISPGAYA</h2>
+      <p id="sub">Clique para abrir em ecrã inteiro e carregar o horário de hoje.</p>
+      <button id="btnAbrir">Abrir Horário</button>
+      <div id="err"></div>
+    </div>
   </div>
 
-  <script>
-    // Links para cada dia da semana (1=Segunda, 6=Sábado)
-    const dayLinks = {
-      1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html?638978632738934779",
-      2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html?638978632738934779",
-      3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html?638978632738934779",
-      4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html?638978632738934779",
-      5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html?638978632738934779",
-      6: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_5_Sabado.html?638978632738934779"
-    };
+  <!-- iframe que mostrará o conteúdo (aparece só depois do clique) -->
+  <iframe id="viewer" allowfullscreen></iframe>
 
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+<script>
+/* links (mantém os que já tens) */
+const dayLinks = {
+  1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html?638978632738934779",
+  2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html?638978632738934779",
+  3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html?638978632738934779",
+  4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html?638978632738934779",
+  5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html?638978632738934779",
+  6: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_5_Sabado.html"
+};
+const dayNames = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
 
-    // Função que abre o horário certo
-    function abrirHorario() {
-      const today = new Date();
-      const day = today.getDay();
-      const msg = document.getElementById("msg");
-      const sub = document.getElementById("submsg");
+const btn = document.getElementById('btnAbrir');
+const start = document.getElementById('start');
+const viewer = document.getElementById('viewer');
+const err = document.getElementById('err');
 
-      if (day === 0) {
-        msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
-        sub.textContent = "Volta amanhã 😊";
-        return;
-      }
+function getDayIndex() {
+  const d = new Date();
+  return d.getDay(); // 0..6
+}
 
-      msg.textContent = `Hoje é ${dayNames[day]}!`;
-      sub.textContent = "A abrir o horário...";
-      setTimeout(() => (window.location.href = dayLinks[day]), 1000);
+function loadDayIntoIframe(dayIdx) {
+  if (!dayLinks[dayIdx]) return false;
+  viewer.src = dayLinks[dayIdx];
+  return true;
+}
+
+/* tenta entrar em fullscreen no elemento iframe */
+async function goFullscreenOnIframe() {
+  try {
+    if (viewer.requestFullscreen) await viewer.requestFullscreen();
+    else if (viewer.webkitRequestFullscreen) await viewer.webkitRequestFullscreen();
+    else if (viewer.msRequestFullscreen) await viewer.msRequestFullscreen();
+    return true;
+  } catch (e) {
+    console.warn("fullscreen fail:", e);
+    return false;
+  }
+}
+
+/* quando clicar: mostra iframe, carrega link, pede fullscreen */
+btn.addEventListener('click', async () => {
+  const day = getDayIndex();
+  if (day === 0) { err.textContent = "Hoje é Domingo — não há aulas."; return; }
+  // tenta carregar no iframe
+  const ok = loadDayIntoIframe(day);
+  if (!ok) { err.textContent = "Link para hoje não encontrado."; return; }
+
+  // esconde start card e mostra iframe
+  start.style.display = 'none';
+  viewer.style.display = 'block';
+
+  // tenta fullscreen no iframe
+  const fsOk = await goFullscreenOnIframe();
+  if (!fsOk) {
+    // fallback: avisa e abre em nova aba
+    err.textContent = "O navegador bloqueou o fullscreen no iframe — a abrir em nova aba.";
+    window.open(dayLinks[day], '_blank');
+  } else {
+    // schedule auto-update à meia-noite: recarregamos src do iframe
+    scheduleMidnightUpdate();
+  }
+});
+
+/* recarregar iframe à próxima meia-noite para mudar de dia automaticamente */
+function scheduleMidnightUpdate() {
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+  const ms = nextMidnight - now;
+  setTimeout(() => {
+    const day = getDayIndex();
+    if (day === 0) {
+      // fim de semana: podes optar por mostrar última sexta ou mensagem
+      viewer.src = ""; // ou manter
+    } else {
+      viewer.src = dayLinks[day];
     }
-
-    // Quando clicar no botão
-    document.getElementById("btnAbrir").addEventListener("click", async () => {
-      // Tenta entrar em ecrã inteiro
-      try {
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-          await document.documentElement.webkitRequestFullscreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-          await document.documentElement.msRequestFullscreen();
-        }
-      } catch (e) {
-        console.warn("Erro ao entrar em fullscreen:", e);
-      }
-
-      abrirHorario();
-    });
-
-    // ⏰ Atualização automática à meia-noite
-    function agendarAtualizacaoDiaria() {
-      const agora = new Date();
-      const proximaMeiaNoite = new Date(
-        agora.getFullYear(),
-        agora.getMonth(),
-        agora.getDate() + 1,
-        0, 0, 5 // 00:00:05
-      );
-      const tempoAteMeiaNoite = proximaMeiaNoite - agora;
-
-      setTimeout(() => {
-        console.log("Novo dia — a atualizar horário...");
-        window.location.reload(); // recarrega a página para abrir o novo dia
-      }, tempoAteMeiaNoite);
-    }
-
-    // Inicia o agendamento quando o site carrega
-    window.addEventListener("load", agendarAtualizacaoDiaria);
-  </script>
+    // reagenda para a próxima meia-noite
+    scheduleMidnightUpdate();
+  }, ms);
+}
+</script>
 </body>
 </html>
