@@ -59,9 +59,9 @@
 
       if (day === 0) {
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
-        sub.textContent = "Volta amanhã 😊";
+        sub.textContent = "Volta amanhã";
       } else {
-        msg.textContent = `Hoje é ${dayNames[day]}!`;
+        msg.textContent = `Hoje é ${dayNames[day]}`;
         sub.textContent = "A abrir o horário...";
         setTimeout(() => window.location.href = dayLinks[day], 1200);
       }
