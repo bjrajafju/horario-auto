@@ -85,6 +85,43 @@
       return dayLinks[day] || null;
     }
 
+    async function loadAndAdapt(url) {
+      try {
+        const response = await fetch(url);
+        const html = await response.text();
+
+        // cria um documento temporário
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        // injeta um estilo global para remover scrollbars sem remover o design original
+        const style = document.createElement("style");
+        style.textContent = `
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      * {
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+      }
+    `;
+        doc.head.appendChild(style);
+
+        // cria um blob com o HTML modificado
+        const blob = new Blob([doc.documentElement.outerHTML], { type: "text/html" });
+        const blobUrl = URL.createObjectURL(blob);
+        viewer.src = blobUrl;
+
+      } catch (e) {
+        console.error("Erro ao carregar ficheiro:", e);
+      }
+    }
+
+
     function calcScale() {
       const baseWidth = 1920;
       const baseHeight = 1080;
