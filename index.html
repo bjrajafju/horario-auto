@@ -85,65 +85,7 @@
       return dayLinks[day] || null;
     }
 
-    async function loadAndAdapt(url) {
-      try {
-        const response = await fetch(url);
-        const html = await response.text();
-
-        // cria um documento temporário para manipular
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-
-        // remove estilos antigos que possam causar scroll
-        const oldStyles = doc.querySelectorAll("style, link[rel='stylesheet']");
-        oldStyles.forEach(s => s.remove());
-
-        // pega o conteúdo principal
-        const main = doc.body.innerHTML;
-
-        // cria novo HTML limpo e escalável
-        const newHtml = `
-        <html>
-          <head>
-            <style>
-              html, body {
-                margin: 0;
-                padding: 0;
-                overflow: hidden;
-                height: 100vh;
-                width: 100vw;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: white;
-              }
-              .content {
-                transform-origin: top left;
-                scale: ${calcScale()};
-              }
-              table {
-                max-width: 100%;
-                height: auto;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="content">
-              ${main}
-            </div>
-          </body>
-        </html>
-      `;
-
-        // cria um blob temporário para injetar no iframe
-        const blob = new Blob([newHtml], { type: "text/html" });
-        const blobUrl = URL.createObjectURL(blob);
-        viewer.src = blobUrl;
-
-      } catch (e) {
-        console.error("Erro ao carregar ficheiro:", e);
-      }
-    }
+    
 
     function calcScale() {
       const baseWidth = 1920;
