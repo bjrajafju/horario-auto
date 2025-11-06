@@ -67,29 +67,96 @@
 
   <script>
     const dayLinks = {
-      1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html",
-      2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html",
-      3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html",
-      4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html",
-      5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html",
+      1: "days/Horário diário da sala 2 - Semana 01_09_2025 - Segunda.html",
+      2: "days/Horário diário da sala 2 - Semana 01_09_2025 - Terça.html",
+      3: "days/Horário diário da sala 2 - Semana 01_09_2025 - Quarta.html",
+      4: "days/Horário diário da sala 2 - Semana 01_09_2025 - Quinta.html",
+      5: "days/Horário diário da sala 2 - Semana 01_09_2025 - Sexta.html",
     };
 
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const viewer = document.getElementById("viewer");
     const msg = document.getElementById("msg");
     const btn = document.getElementById("openBtn");
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
     function getTodayUrl() {
       const today = new Date();
       const day = today.getDay();
-      return day === 0 ? null : dayLinks[day];
+      return dayLinks[day] || null;
+    }
+
+    async function loadAndAdapt(url) {
+      try {
+        const response = await fetch(url);
+        const html = await response.text();
+
+        // cria um documento temporário para manipular
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        // remove estilos antigos que possam causar scroll
+        const oldStyles = doc.querySelectorAll("style, link[rel='stylesheet']");
+        oldStyles.forEach(s => s.remove());
+
+        // pega o conteúdo principal
+        const main = doc.body.innerHTML;
+
+        // cria novo HTML limpo e escalável
+        const newHtml = `
+        <html>
+          <head>
+            <style>
+              html, body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                height: 100vh;
+                width: 100vw;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: white;
+              }
+              .content {
+                transform-origin: top left;
+                scale: ${calcScale()};
+              }
+              table {
+                max-width: 100%;
+                height: auto;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="content">
+              ${main}
+            </div>
+          </body>
+        </html>
+      `;
+
+        // cria um blob temporário para injetar no iframe
+        const blob = new Blob([newHtml], { type: "text/html" });
+        const blobUrl = URL.createObjectURL(blob);
+        viewer.src = blobUrl;
+
+      } catch (e) {
+        console.error("Erro ao carregar ficheiro:", e);
+      }
+    }
+
+    function calcScale() {
+      const baseWidth = 1920;
+      const baseHeight = 1080;
+      const scaleX = window.innerWidth / baseWidth;
+      const scaleY = window.innerHeight / baseHeight;
+      return Math.min(scaleX, scaleY).toFixed(3);
     }
 
     function openFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) elem.requestFullscreen();
       else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
 
     function updateSchedule() {
@@ -99,21 +166,10 @@
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
         viewer.style.display = "none";
       } else {
-        const url = getTodayUrl();
         msg.textContent = `Horário de ${dayNames[day]}`;
-        viewer.src = url;
         viewer.style.display = "block";
+        loadAndAdapt(getTodayUrl());
       }
-    }
-
-    function ajustarIframe() {
-      const iframe = document.getElementById('viewer');
-      const baseWidth = 1920;
-      const baseHeight = 1080;
-      const scaleX = window.innerWidth / baseWidth;
-      const scaleY = window.innerHeight / baseHeight;
-      const scale = Math.min(scaleX, scaleY);
-      iframe.style.transform = `scale(${scale})`;
     }
 
     btn.addEventListener("click", () => {
@@ -121,12 +177,14 @@
       btn.style.display = "none";
       msg.style.display = "none";
       updateSchedule();
-      ajustarIframe();
-      setInterval(updateSchedule, 60 * 1000);
     });
 
-    window.addEventListener('resize', ajustarIframe);
+    window.addEventListener("resize", () => {
+      if (viewer.src) loadAndAdapt(getTodayUrl());
+    });
   </script>
+
+
 </body>
 
 </html>
