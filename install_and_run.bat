@@ -31,7 +31,6 @@ if not exist "%BASE_DIR%node_modules" (
 
 REM Iniciar servidor e redirecionar logs
 echo A iniciar o servidor...
-start "" http://localhost:3000
 "%NODE_EXE%" "%BASE_DIR%proxy.js" > "%BASE_DIR%server_output.log" 2>&1
 
 echo.
