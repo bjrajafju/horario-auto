@@ -1,25 +1,31 @@
 {
-  "name": "horario-auto",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "",
-  "main": "proxy.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bjrajafju/horario-auto.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/bjrajafju/horario-auto/issues"
-  },
-  "homepage": "https://github.com/bjrajafju/horario-auto#readme",
-  "dependencies": {
-    "express": "^5.1.0",
-    "node-fetch": "^3.3.2"
-  }
+    "name": "horario-auto",
+    "version": "1.0.0",
+    "description": "",
+    "main": "proxy.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^5.1.0",
+        "node-fetch": "^2.7.0"
+    },
+    "bin": "proxy.js",
+    "pkg": {
+        "scripts": [
+            "proxy.js"
+        ],
+        "assets": [
+            "index.html",
+            "ajuste.css",
+            "node_modules/express/**/*",
+            "node_modules/node-fetch/**/*"
+        ],
+        "targets": [
+            "node18-win-x64"
+        ]
+    }
 }

@@ -1,16 +1,22 @@
-import express from "express";
-import fetch from "node-fetch";
-import path from "path";
-import { fileURLToPath } from "url";
+const express = require("express");
+const fetch = require("node-fetch"); // usa node-fetch v2
+const path = require("path");
+const { exec } = require("child_process");
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const PORT = 3000;
+const __dirname_actual = path.resolve();
+
+// Abrir browser automaticamente
+const openBrowser = () => {
+    const url = `http://localhost:${PORT}`;
+    exec(`start "" "${url}"`);
+};
 
 // Servir ficheiros locais (index.html, ajuste.css, etc.)
-app.use(express.static(__dirname));
+app.use(express.static(__dirname_actual));
 
-// Proxy para buscar a página externa e injetar o CSS
+// Proxy para buscar página externa e injetar CSS
 app.get("/proxy", async (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send("Falta o parâmetro ?url=");
@@ -19,7 +25,6 @@ app.get("/proxy", async (req, res) => {
         const response = await fetch(targetUrl);
         let html = await response.text();
 
-        // Injetar o CSS local no <head>
         html = html.replace(
             /<head[^>]*>/i,
             `<head><link rel="stylesheet" href="/ajuste.css">`
@@ -33,8 +38,8 @@ app.get("/proxy", async (req, res) => {
     }
 });
 
-// Iniciar servidor
-const PORT = 3000;
-app.listen(PORT, () =>
-    console.log(`Servidor ativo em http://localhost:${PORT}`)
-);
+// Iniciar servidor e abrir browser
+app.listen(PORT, () => {
+    console.log(`Servidor ativo em http://localhost:${PORT}`);
+    openBrowser();
+});
