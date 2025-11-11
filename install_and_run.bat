@@ -5,40 +5,47 @@ echo   Horário Automático ISPGAYA - Servidor Local
 echo ==============================================
 echo.
 
-setlocal enabledelayedexpansion
+REM Caminho base
+setlocal
+set BASE_DIR=%~dp0
 
-REM Define variáveis de caminho
-set NODE_DIR=%cd%\node_temp\node-v22.9.0-win-x64
-set NODE_EXE=%NODE_DIR%\node.exe
-
-REM Verifica se o Node.js já está instalado
+REM Verifica se o Node.js está instalado
 where node >nul 2>nul
 if %errorlevel% neq 0 (
     echo Node.js não encontrado. A instalar localmente...
-    if not exist "%NODE_EXE%" (
-        mkdir "%cd%\node_temp" >nul 2>nul
-        cd node_temp
-        powershell -Command "Invoke-WebRequest -Uri https://nodejs.org/dist/v22.9.0/node-v22.9.0-win-x64.zip -OutFile node.zip"
-        powershell -Command "Expand-Archive node.zip -DestinationPath ."
-        cd ..
-    )
+    mkdir "%BASE_DIR%node_temp" >nul 2>nul
+    cd "%BASE_DIR%node_temp"
+
+    REM Faz download da versão portátil do Node.js
+    powershell -Command "Invoke-WebRequest -Uri https://nodejs.org/dist/v22.9.0/node-v22.9.0-win-x64.zip -OutFile node.zip"
+    powershell -Command "Expand-Archive node.zip -DestinationPath ."
+    del node.zip
+
     echo Node.js portátil pronto.
-    set NODE_CMD="%NODE_EXE%"
+    set NODE_DIR=%BASE_DIR%node_temp\node-v22.9.0-win-x64
+    set NODE_EXE=%NODE_DIR%\node.exe
+    set NPM_CLI=%NODE_DIR%\node_modules\npm\bin\npm-cli.js
 ) else (
     echo Node.js já está instalado no sistema.
-    set NODE_CMD=node
+    set NODE_EXE=node
 )
 
+cd "%BASE_DIR%"
 echo.
 echo Instalando dependências (isto pode demorar alguns segundos)...
-call %NODE_CMD% node_modules\.bin\npm install 2>nul || call npm install
+
+if exist "%NODE_EXE%" (
+    "%NODE_EXE%" "%NPM_CLI%" install
+) else (
+    call npm install
+)
 
 echo.
 echo A iniciar o servidor...
 start "" http://localhost:3000
 echo.
 
-%NODE_CMD% proxy.js
+"%NODE_EXE%" proxy.js
 
 echo.
 pause
