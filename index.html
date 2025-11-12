@@ -55,6 +55,19 @@
       height: 100%;
       border: none;
       background: white;
+      width: 1920px;
+      /* largura original aproximada da página */
+      height: 1080px;
+      /* altura original aproximada da página */
+      transform-origin: top left;
+    }
+
+    @media screen {
+
+      body,
+      html {
+        overflow: hidden;
+      }
     }
   </style>
 </head>
@@ -71,7 +84,6 @@
       3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html?638978632738934779",
       4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html?638978632738934779",
       5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html?638978632738934779",
-      6: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_5_Sabado.html?638978632738934779"
     };
 
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -95,7 +107,7 @@
     function updateSchedule() {
       const today = new Date();
       const day = today.getDay();
-      if (day === 0) {
+      if (day === 0 || day === 6) {
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
         viewer.style.display = "none";
       } else {
@@ -114,7 +126,20 @@
       // Atualiza automaticamente à meia-noite
       setInterval(updateSchedule, 60 * 1000);
     });
+
+    function ajustarIframe() {
+      const iframe = document.getElementById('viewer');
+      const scaleX = window.innerWidth / iframe.offsetWidth;
+      const scaleY = window.innerHeight / iframe.offsetHeight;
+      const scale = Math.min(scaleX, scaleY);
+      iframe.style.transform = `scale(${scale})`;
+    }
+
+    // Ajusta quando abre e quando o ecrã muda de tamanho
+    window.addEventListener('resize', ajustarIframe);
+    window.addEventListener('load', ajustarIframe);
   </script>
+
 </body>
 
 </html>
