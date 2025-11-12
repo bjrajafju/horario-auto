@@ -1,36 +1,29 @@
 <!doctype html>
 <html lang="pt">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Horário Automático ISPGAYA</title>
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       height: 100%;
-      background: linear-gradient(135deg, #f4f4f9, #e6ecf5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      font-family: system-ui, sans-serif;
-    }
-
-    #container {
-      position: relative;
       width: 100%;
-      height: 100%;
+      background: linear-gradient(135deg, #f4f4f9, #e6ecf5);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      font-family: system-ui, sans-serif;
+      overflow: hidden;
     }
 
     #msg {
       position: absolute;
       top: 20px;
-      text-align: center;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       color: #444;
       z-index: 2;
     }
@@ -45,33 +38,31 @@
       background: #0078ff;
       color: white;
       cursor: pointer;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
       transition: transform 0.2s ease;
       z-index: 2;
     }
+
     #openBtn:hover {
       transform: scale(1.05);
     }
 
     iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       border: none;
-      max-width: 1920px;
-      max-height: 1080px;
-      object-fit: contain;
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
     }
   </style>
 </head>
+
 <body>
-  <div id="container">
-    <div id="msg">Clique abaixo para abrir o horário em ecrã inteiro</div>
-    <button id="openBtn">Abrir Horário</button>
-    <iframe id="viewer" allowfullscreen></iframe>
-  </div>
+  <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
+  <button id="openBtn">Abrir Horário</button>
+  <iframe id="viewer" allowfullscreen></iframe>
 
   <script>
     const dayLinks = {
@@ -104,7 +95,6 @@
     function updateSchedule() {
       const today = new Date();
       const day = today.getDay();
-
       if (day === 0) {
         msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
         viewer.style.display = "none";
@@ -119,9 +109,12 @@
     btn.addEventListener("click", () => {
       openFullscreen();
       btn.style.display = "none";
+      msg.style.display = "none";
       updateSchedule();
-      setInterval(updateSchedule, 60 * 1000); // verifica minuto a minuto (muda à meia-noite)
+      // Atualiza automaticamente à meia-noite
+      setInterval(updateSchedule, 60 * 1000);
     });
   </script>
 </body>
+
 </html>
