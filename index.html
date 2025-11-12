@@ -91,6 +91,31 @@
 
     function updateSchedule() {
       viewer.src = "";
+      viewer.onload = () => {
+        const iframeDoc = viewer.contentDocument || viewer.contentWindow.document;
+        const table = iframeDoc.querySelector("table");
+        if (!table) return;
+
+        const scaleToFit = () => {
+          const containerHeight = viewer.clientHeight;
+          const containerWidth = viewer.clientWidth;
+
+          const tableHeight = table.scrollHeight;
+          const tableWidth = table.scrollWidth;
+
+          const scaleY = containerHeight / tableHeight;
+          const scaleX = containerWidth / tableWidth;
+
+          const scale = Math.min(scaleX, scaleY, 1); // nunca aumenta, só reduz
+
+          table.style.transformOrigin = "top left";
+          table.style.transform = `scale(${scale})`;
+        };
+
+        scaleToFit();
+        window.addEventListener("resize", scaleToFit);
+      };
+
       const today = new Date();
       const day = today.getDay();
 
