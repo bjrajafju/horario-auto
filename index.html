@@ -57,6 +57,7 @@
       border: none;
       display: none;
       z-index: 1;
+      background: #000;
     }
   </style>
 </head>
@@ -68,8 +69,6 @@
   <iframe id="viewer"></iframe>
 
   <script>
-
-
     const dayLinks = {
       1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html",
       2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html",
@@ -91,34 +90,8 @@
 
     function updateSchedule() {
       viewer.src = "";
-      viewer.onload = () => {
-        const iframeDoc = viewer.contentDocument || viewer.contentWindow.document;
-        const table = iframeDoc.querySelector("table");
-        if (!table) return;
-
-        const scaleToFit = () => {
-          const containerHeight = viewer.clientHeight;
-          const containerWidth = viewer.clientWidth;
-
-          const tableHeight = table.scrollHeight;
-          const tableWidth = table.scrollWidth;
-
-          const scaleY = containerHeight / tableHeight;
-          const scaleX = containerWidth / tableWidth;
-
-          const scale = Math.min(scaleX, scaleY, 1); // nunca aumenta, só reduz
-
-          table.style.transformOrigin = "top left";
-          table.style.transform = `scale(${scale})`;
-        };
-
-        scaleToFit();
-        window.addEventListener("resize", scaleToFit);
-      };
-
       const today = new Date();
       const day = today.getDay();
-
       const url = getTodayUrl();
 
       if (!url) {
@@ -134,6 +107,33 @@
       viewer.src = `/proxy?url=${encodeURIComponent(url)}`;
       viewer.style.display = "block";
 
+      // 🔹 Escalar automaticamente a tabela dentro do iframe
+      viewer.onload = () => {
+        const iframeDoc = viewer.contentDocument || viewer.contentWindow.document;
+        const table = iframeDoc.querySelector("table");
+        if (!table) return;
+
+        const scaleToFit = () => {
+          const containerHeight = viewer.clientHeight;
+          const containerWidth = viewer.clientWidth;
+
+          const tableHeight = table.scrollHeight;
+          const tableWidth = table.scrollWidth;
+
+          const scaleY = containerHeight / tableHeight;
+          const scaleX = containerWidth / tableWidth;
+
+          const scale = Math.min(scaleX, scaleY * 0.95, 1);
+
+          table.style.transformOrigin = "top left";
+          table.style.transform = `scale(${scale})`;
+          table.style.margin = "0 auto";
+          table.style.display = "block";
+        };
+
+        scaleToFit();
+        window.addEventListener("resize", scaleToFit);
+      };
     }
 
     function openFullscreen() {
@@ -162,7 +162,6 @@
       scheduleMidnightUpdate();
     });
   </script>
-
 </body>
 
 </html>
