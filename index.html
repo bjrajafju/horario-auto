@@ -140,24 +140,6 @@
         });
 
         observer.observe(iframeDoc.body, { childList: true, subtree: true });
-
-        // Redimensionamento da tabela
-        const scaleToFit = () => {
-          const containerHeight = viewer.clientHeight * 0.95;
-          const containerWidth = viewer.clientWidth;
-          const tableHeight = table.scrollHeight;
-          const tableWidth = table.scrollWidth;
-
-          const scaleY = containerHeight / tableHeight;
-          const scaleX = containerWidth / tableWidth;
-          const scale = Math.min(scaleY, 1);
-
-          table.style.transformOrigin = "top left";
-          table.style.transform = `scaleY(${scale})`;
-          table.style.margin = "0 auto";
-          table.style.display = "block";
-        };
-
         scaleToFit();
         window.addEventListener("resize", scaleToFit);
       };
@@ -166,9 +148,16 @@
 
     function openFullscreen() {
       const elem = document.documentElement;
+
+      // entrar em fullscreen
       if (elem.requestFullscreen) elem.requestFullscreen();
       else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
       else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+
+      // simular o comportamento real do browser
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 50);
     }
 
     function scheduleMidnightUpdate() {
@@ -205,6 +194,13 @@
           const url = await getTodayUrl();
           if (url) {
             viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`;
+            setTimeout(() => {
+              if (viewer.contentDocument) {
+                const table = viewer.contentDocument.querySelector("table");
+                if (table) scaleToFit();
+              }
+            }, 150);
+
             console.log("Horário recarregado automaticamente:", new Date().toLocaleString());
           }
           scheduleNext();
@@ -212,6 +208,30 @@
       }
       scheduleNext();
     }
+
+    // Redimensionamento da tabela
+    function scaleToFit() {
+      const iframeDoc = viewer.contentDocument;
+      if (!iframeDoc) return;
+
+      const table = iframeDoc.querySelector("table");
+      if (!table) return;
+
+      // Reset transform
+      table.style.transform = "none";
+      table.style.display = "block";
+      table.style.margin = "0 auto";
+
+      const iframeHeight = viewer.clientHeight;
+      const tableHeight = table.scrollHeight;
+
+      // Escalar verticalmente apenas se a tabela for maior que o iframe
+      const scaleY = Math.min(iframeHeight / tableHeight, 1);
+
+      table.style.transformOrigin = "top left";
+      table.style.transform = `scaleY(${scaleY})`;
+    }
+
 
     btn.addEventListener("click", async () => {
       openFullscreen();
