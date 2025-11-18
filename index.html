@@ -12,7 +12,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #000;
+      background: #ffffff;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -57,7 +57,19 @@
       border: none;
       display: none;
       z-index: 1;
-      background: #000;
+      background: #ffffff;
+    }
+
+    #weekendImg {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background: #d68d37;
+      z-index: 1;
     }
   </style>
 </head>
@@ -67,66 +79,81 @@
   <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
   <button id="openBtn">Abrir Horário</button>
   <iframe id="viewer"></iframe>
+  <img id="weekendImg" src="imgs/ispgaya.jpg">
 
   <script>
-    const dayLinks = {
-      1: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_0_Segunda.html",
-      2: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_1_Terca.html",
-      3: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_2_Quarta.html",
-      4: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_3_Quinta.html",
-      5: "https://ispgaya.bulletscheduling.com/Corporate/Classrooms/diario2_20250901_4_Sexta.html"
-    };
-
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
     const viewer = document.getElementById("viewer");
     const msg = document.getElementById("msg");
     const btn = document.getElementById("openBtn");
 
-    function getTodayUrl() {
-      const day = new Date().getDay();
-      return dayLinks[day] || null;
+    function jsDayToFileDay(jsDay) {
+      if (jsDay === 0 || jsDay === 6) return null;
+      return jsDay - 1;
     }
 
-    function updateSchedule() {
+    async function getTodayUrl() {
+      const jsDay = new Date().getDay();
+      const fileDay = jsDayToFileDay(jsDay);
+      if (fileDay === null) return null;
+
+      try {
+        const res = await fetch(`/latest?day=${fileDay}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.url;
+      } catch {
+        return null;
+      }
+    }
+
+    async function updateSchedule() {
       viewer.src = "";
       const today = new Date();
-      const day = today.getDay();
-      const url = getTodayUrl();
+      const jsDay = today.getDay();
+      const url = await getTodayUrl();
 
       if (!url) {
-        msg.textContent = `Hoje é ${dayNames[day]} — não há aulas.`;
-        msg.style.display = "block";
-        viewer.src = "";
+        msg.style.display = "none";
         viewer.style.display = "none";
+        document.getElementById("weekendImg").style.display = "block";
         return;
       }
 
-      msg.textContent = `Horário de ${dayNames[day]}`;
+      document.getElementById("weekendImg").style.display = "none";
       msg.style.display = "none";
-      viewer.src = `/proxy?url=${encodeURIComponent(url)}`;
+
+      viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`;
       viewer.style.display = "block";
 
-      // 🔹 Escalar automaticamente a tabela dentro do iframe
       viewer.onload = () => {
         const iframeDoc = viewer.contentDocument || viewer.contentWindow.document;
         const table = iframeDoc.querySelector("table");
         if (!table) return;
 
-        const scaleToFit = () => {
-          const containerHeight = viewer.clientHeight;
-          const containerWidth = viewer.clientWidth;
+        // Observador que remove qualquer parágrafo ou div com "Data de impressão"
+        const observer = new MutationObserver(() => {
+          const elems = iframeDoc.querySelectorAll("p, div");
+          elems.forEach(el => {
+            if (/Data de impressão/i.test(el.textContent)) el.remove();
+          });
+        });
 
+        observer.observe(iframeDoc.body, { childList: true, subtree: true });
+
+        // Redimensionamento da tabela
+        const scaleToFit = () => {
+          const containerHeight = viewer.clientHeight * 0.95;
+          const containerWidth = viewer.clientWidth;
           const tableHeight = table.scrollHeight;
           const tableWidth = table.scrollWidth;
 
           const scaleY = containerHeight / tableHeight;
           const scaleX = containerWidth / tableWidth;
-
-          const scale = Math.min(scaleX, scaleY * 0.95, 1);
+          const scale = Math.min(scaleY, 1);
 
           table.style.transformOrigin = "top left";
-          table.style.transform = `scale(${scale})`;
+          table.style.transform = `scaleY(${scale})`;
           table.style.margin = "0 auto";
           table.style.display = "block";
         };
@@ -134,6 +161,7 @@
         scaleToFit();
         window.addEventListener("resize", scaleToFit);
       };
+
     }
 
     function openFullscreen() {
@@ -155,13 +183,45 @@
       }, msUntilMidnight);
     }
 
-    btn.addEventListener("click", () => {
+    function scheduleAutoRefresh() {
+      const targetHours = [10, 14, 18];
+
+      function getNextDelay() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const nextHour = targetHours.find(h => h > currentHour);
+        const trigger = new Date(now);
+        if (nextHour !== undefined) trigger.setHours(nextHour, 0, 0, 0);
+        else {
+          trigger.setDate(trigger.getDate() + 1);
+          trigger.setHours(targetHours[0], 0, 0, 0);
+        }
+        return trigger - now;
+      }
+
+      function scheduleNext() {
+        const delay = getNextDelay();
+        setTimeout(async () => {
+          const url = await getTodayUrl();
+          if (url) {
+            viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`;
+            console.log("Horário recarregado automaticamente:", new Date().toLocaleString());
+          }
+          scheduleNext();
+        }, delay);
+      }
+      scheduleNext();
+    }
+
+    btn.addEventListener("click", async () => {
       openFullscreen();
       btn.style.display = "none";
-      updateSchedule();
+      await updateSchedule();
       scheduleMidnightUpdate();
+      scheduleAutoRefresh();
     });
   </script>
+
 </body>
 
 </html>
