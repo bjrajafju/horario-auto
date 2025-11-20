@@ -163,11 +163,13 @@ td.cabSubTit {
     min-width: 50px;
     width: 200px;
     max-width: 400px;
+    font-size: 1.2vw;
 }
 
 td.cabTitulo {
     background-color: #fff;
     color: #222;
+    font-size: 2vw;
 }
 
 td.cabNormal {
@@ -181,7 +183,8 @@ table td.td_lateral {
     color: #fff;
     font-size: 13px;
     text-align: center;
-    font-weight: 600;
+    font-weight: normal;
+    font-family: Verdana, Arial, sans-serif;
 }
 
 table td.td_lateral {
@@ -196,6 +199,7 @@ td.td_branca,
 tr.tr_branca {
     border: none;
     line-height: 0;
+    font-size: 30px !important;
 }
 
 td.td_vermelha {
@@ -417,8 +421,11 @@ table td {
     image-rendering: pixelated;
 }
 
-td.td_cabecalho,
 td.td_lateral {
+    font-size: 10px !important;
+}
+
+td.cabecalho {
     font-size: 10px !important;
 }
 
