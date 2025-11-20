@@ -121,7 +121,7 @@ tr.tr_branca {
 
 body {
     background-color: #fff;
-    margin: 15px;
+    margin: 0px !important;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11px;
     line-height: 20px;
@@ -160,16 +160,16 @@ table.cabecalho td {
 
 td.cabSubTit {
     background-color: #fff;
-    min-width: 50px;
+    /*min-width: 50px;
     width: 200px;
-    max-width: 400px;
-    font-size: 1.2vw;
+    max-width: 400px;*/
+    font-size: 14px !important;
 }
 
 td.cabTitulo {
     background-color: #fff;
     color: #222;
-    font-size: 1.5vw;
+    font-size: 18px !important;
 }
 
 td.cabNormal {
@@ -190,16 +190,16 @@ table td.td_lateral {
 table td.td_lateral {
     background-color: #b5c77f;
     font-size: 13px;
-    min-width: 80px;
+    /*min-width: 80px;
     width: 80px;
-    max-width: 80px;
+    max-width: 80px;*/
 }
 
 td.td_branca,
 tr.tr_branca {
     border: none;
     line-height: 0;
-    font-size: 30px !important;
+    font-size: 14px !important;
 }
 
 td.td_vermelha {
@@ -234,7 +234,7 @@ td.td_tipologia_1 {
 }
 
 tr.tr_dif {
-    width: 170px;
+    /*width: 170px;*/
     border: 1px solid #dae3bf;
     text-align: center;
 }
@@ -365,7 +365,7 @@ td.titDiscProf {
         margin: 0 !important;
     }
     table {
-        font-size: 10px !important;
+        font-size: 9px !important;
     }
     table td {
         border-color: #000 !important;
@@ -397,8 +397,11 @@ body {
 table {
     width: 98vw !important;
     max-width: 98vw !important;
-    table-layout: auto !important;
-    font-size: 10px !important;
+    table-layout: fixed !important;
+    font-size: 9px !important;
+    white-space: normal !important;
+    word-wrap: break-word;
+
 
     /* --- Melhora a nitidez ao escalar --- */
     image-rendering: optimizeSpeed; /* fallback */
@@ -426,13 +429,13 @@ td.td_lateral {
 }
 
 td.td_cabecalho {
-    font-size: 10px !important;
+    font-size: 9px !important;
 }
 
 /* Responsividade progressiva */
 @media (max-width: 1200px) {
     table {
-        font-size: 9px !important;
+        font-size: 8px !important;
     }
     table td {
         padding: 3px !important;
