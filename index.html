@@ -12,7 +12,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #ffffff;
+      background: #fff;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -28,10 +28,10 @@
       border: none;
       border-radius: 12px;
       background: #0078ff;
-      color: white;
+      color: #fff;
       cursor: pointer;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, .3);
+      transition: transform .2s;
       z-index: 2;
     }
 
@@ -48,98 +48,71 @@
       z-index: 2;
     }
 
-    iframe {
+    iframe,
+    #weekendImg {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      z-index: 1;
+    }
+
+    iframe {
       border: none;
       display: none;
-      z-index: 1;
-      background: #ffffff;
+      background: #fff;
     }
 
     #weekendImg {
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
       object-fit: contain;
       background: #d68d37;
-      z-index: 1;
     }
   </style>
 </head>
 
 <body>
-
   <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
   <button id="openBtn">Abrir Horário</button>
   <iframe id="viewer"></iframe>
   <img id="weekendImg" src="imgs/ispgaya.jpg">
-
   <script>
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const viewer = document.getElementById("viewer");
-    const msg = document.getElementById("msg");
-    const btn = document.getElementById("openBtn");
+    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn");
 
-    function jsDayToFileDay(jsDay) {
-      if (jsDay === 0 || jsDay === 6) return null;
-      return jsDay - 1;
-    }
+    const jsDayToFileDay = d => d ? d > 6 ? null : d - 1 : null;
 
     async function getTodayUrl() {
-      const jsDay = new Date().getDay();
-      const fileDay = jsDayToFileDay(jsDay);
+      const fileDay = jsDayToFileDay(new Date().getDay());
       if (fileDay === null) return null;
-
-      try {
-        const res = await fetch(`/latest?day=${fileDay}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.url;
-      } catch {
-        return null;
-      }
+      try { const res = await fetch(`/latest?day=${fileDay}`); if (!res.ok) return null; const data = await res.json(); return data.url; } catch { return null; }
     }
 
     async function updateSchedule() {
-      viewer.src = "";
-      const today = new Date();
-      const jsDay = today.getDay();
-      const url = await getTodayUrl();
-
-      if (!url) {
-        msg.style.display = "none";
-        viewer.style.display = "none";
-        document.getElementById("weekendImg").style.display = "block";
-        return;
-      }
-
-      document.getElementById("weekendImg").style.display = "none";
-      msg.style.display = "none";
-
-      viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`;
-      viewer.style.display = "block";
-
+      viewer.src = ""; const url = await getTodayUrl();
+      if (!url) { msg.style.display = "none"; viewer.style.display = "none"; document.getElementById("weekendImg").style.display = "block"; return; }
+      document.getElementById("weekendImg").style.display = "none"; msg.style.display = "none"; viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`; viewer.style.display = "block";
       viewer.onload = () => {
-        const iframeDoc = viewer.contentDocument || viewer.contentWindow.document;
-        const table = iframeDoc.querySelector("table");
+        const doc = viewer.contentDocument || viewer.contentWindow.document;
+        const table = doc.querySelector("table");
         if (!table) return;
 
-        // Observador que remove qualquer parágrafo ou div com "Data de impressão"
-        const observer = new MutationObserver(() => {
-          const elems = iframeDoc.querySelectorAll("p, div");
-          elems.forEach(el => {
-            if (/Data de impressão/i.test(el.textContent)) el.remove();
+        // Remover "Data de impressão"
+        new MutationObserver(() => {
+          doc.querySelectorAll("p,div").forEach(e => {
+            /Data de impressão/i.test(e.textContent) && e.remove();
           });
-        });
+        }).observe(doc.body, { childList: true, subtree: true });
 
-        observer.observe(iframeDoc.body, { childList: true, subtree: true });
+        // encolher a letra da hora um bocadinho às terças feiras pq a tabela tem muita informação
+        const today = new Date().getDay(); // 2 = terça
+        if (today === 2) {
+          doc.querySelectorAll("td.td_lateral").forEach(td => {
+            td.style.fontSize = "9px";     // era 10px
+            td.style.lineHeight = "12px";
+          });
+        }
+
         scaleToFit();
         window.addEventListener("resize", scaleToFit);
       };
@@ -147,101 +120,40 @@
     }
 
     function openFullscreen() {
-      const elem = document.documentElement;
-
-      // entrar em fullscreen
-      if (elem.requestFullscreen) elem.requestFullscreen();
-      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-
-      // simular o comportamento real do browser
-      setTimeout(() => {
-        window.dispatchEvent(new Event("resize"));
-      }, 50);
+      const e = document.documentElement;
+      e.requestFullscreen?.() || e.webkitRequestFullscreen?.() || e.msRequestFullscreen?.();
+      setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
     }
 
     function scheduleMidnightUpdate() {
-      const now = new Date();
-      const nextMidnight = new Date(now);
-      nextMidnight.setHours(24, 0, 5, 0);
-      const msUntilMidnight = nextMidnight - now;
-
-      setTimeout(() => {
-        updateSchedule();
-        scheduleMidnightUpdate();
-      }, msUntilMidnight);
+      const now = new Date(), next = new Date(now); next.setHours(24, 0, 5, 0);
+      setTimeout(() => { updateSchedule(); scheduleMidnightUpdate(); }, next - now);
     }
 
     function scheduleAutoRefresh() {
-      const targetHours = [10, 14, 18];
-
-      function getNextDelay() {
-        const now = new Date();
-        const currentHour = now.getHours();
-        const nextHour = targetHours.find(h => h > currentHour);
-        const trigger = new Date(now);
-        if (nextHour !== undefined) trigger.setHours(nextHour, 0, 0, 0);
-        else {
-          trigger.setDate(trigger.getDate() + 1);
-          trigger.setHours(targetHours[0], 0, 0, 0);
-        }
+      const target = [10, 14, 18];
+      function nextDelay() {
+        const now = new Date(), h = now.getHours(), nextH = target.find(x => x > h), trigger = new Date(now);
+        if (nextH !== undefined) trigger.setHours(nextH, 0, 0, 0); else { trigger.setDate(trigger.getDate() + 1); trigger.setHours(target[0], 0, 0, 0); }
         return trigger - now;
       }
-
-      function scheduleNext() {
-        const delay = getNextDelay();
+      (function scheduleNext() {
         setTimeout(async () => {
-          const url = await getTodayUrl();
-          if (url) {
-            viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`;
-            setTimeout(() => {
-              if (viewer.contentDocument) {
-                const table = viewer.contentDocument.querySelector("table");
-                if (table) scaleToFit();
-              }
-            }, 150);
-
-            console.log("Horário recarregado automaticamente:", new Date().toLocaleString());
-          }
+          const url = await getTodayUrl(); if (url) { viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`; setTimeout(() => { viewer.contentDocument?.querySelector("table") && scaleToFit(); }, 150); console.log("Horário recarregado automaticamente:", new Date().toLocaleString()); }
           scheduleNext();
-        }, delay);
-      }
-      scheduleNext();
+        }, nextDelay());
+      })();
     }
 
-    // Redimensionamento da tabela
     function scaleToFit() {
-      const iframeDoc = viewer.contentDocument;
-      if (!iframeDoc) return;
-
-      const table = iframeDoc.querySelector("table");
-      if (!table) return;
-
-      // Reset transform
-      table.style.transform = "none";
-      table.style.display = "block";
-      table.style.margin = "0 auto";
-
-      const iframeHeight = viewer.clientHeight;
-      const tableHeight = table.scrollHeight;
-
-      // Escalar verticalmente apenas se a tabela for maior que o iframe
-      const scaleY = Math.min(iframeHeight / tableHeight, 1);
-
-      table.style.transformOrigin = "top left";
-      table.style.transform = `scaleY(${scaleY})`;
+      const table = viewer.contentDocument?.querySelector("table"); if (!table) return;
+      table.style.transform = "none"; table.style.display = "block"; table.style.margin = "0 auto";
+      const scaleY = Math.min(viewer.clientHeight / table.scrollHeight, 1);
+      table.style.transformOrigin = "top left"; table.style.transform = `scaleY(${scaleY})`;
     }
 
-
-    btn.addEventListener("click", async () => {
-      openFullscreen();
-      btn.style.display = "none";
-      await updateSchedule();
-      scheduleMidnightUpdate();
-      scheduleAutoRefresh();
-    });
+    btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); });
   </script>
-
 </body>
 
 </html>
