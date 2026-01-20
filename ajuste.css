@@ -51,7 +51,7 @@ table.cabecalho td {
 }
 
 table td {
-    padding: 4px !important;
+    padding: 2px !important;
     border-color: #000000 !important;
     color: #222222 !important;
     background: #ffffff !important;
@@ -129,7 +129,7 @@ td.direita2 {
 /* Regras de Linhas e Células Específicas */
 td.td_branca,
 tr.tr_branca {
-    padding: 8px;
+    padding: 4px;
     border: none;
     line-height: 0;
     font-size: 14px !important;
@@ -298,7 +298,7 @@ td.td_tipologia_1 {
         font-size: 8px !important;
     }
     table td {
-        padding: 3px !important;
+        padding: 2px !important;
     }
 }
 
