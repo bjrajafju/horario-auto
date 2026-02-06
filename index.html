@@ -69,16 +69,41 @@
       object-fit: contain;
       background: #d68d37;
     }
+
+    #messagesContainer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 5px;
+      box-sizing: border-box;
+      max-height: 30%;
+      overflow-y: auto;
+      flex-direction: column;
+      z-index: 3;
+      display: none;
+    }
+
+    #messagesContainer div {
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 1px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
   </style>
 </head>
 
 <body>
   <div id="msg">Clique no botão para abrir o horário em ecrã inteiro</div>
   <button id="openBtn">Abrir Horário</button>
+  <div id="messagesContainer"></div>
   <iframe id="viewer"></iframe>
   <img id="weekendImg" src="imgs/ispgaya.jpg">
   <script>
-    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn");
+    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn"), messagesContainer = document.getElementById("messagesContainer");
 
     const jsDayToFileDay = d => d ? d > 6 ? null : d - 1 : null;
 
@@ -116,7 +141,6 @@
         scaleToFit();
         window.addEventListener("resize", scaleToFit);
       };
-
     }
 
     function openFullscreen() {
@@ -148,11 +172,38 @@
     function scaleToFit() {
       const table = viewer.contentDocument?.querySelector("table"); if (!table) return;
       table.style.transform = "none"; table.style.display = "block"; table.style.margin = "0 auto";
-      const scaleY = Math.min(viewer.clientHeight / table.scrollHeight, 1);
+      const availableHeight = viewer.clientHeight - messagesContainer.offsetHeight;
+      const scaleY = Math.min(availableHeight / table.scrollHeight, 1);
       table.style.transformOrigin = "top left"; table.style.transform = `scaleY(${scaleY})`;
     }
 
-    btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); });
+    btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; messagesContainer.style.display = "flex"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); });
+
+    async function loadMessages() {
+      try {
+        const res = await fetch("http://localhost:3001/public/messages");
+        const messages = await res.json();
+
+        messagesContainer.innerHTML = "";
+
+        messages.forEach(msg => {
+          const p = document.createElement("div");
+          p.textContent = msg.text;
+          p.style.padding = "4px 8px";
+          p.style.borderBottom = "1px solid rgba(255,255,255,0.3)";
+          messagesContainer.appendChild(p);
+        });
+
+        // Ajustar tabela para não sobrepor mensagens
+        scaleToFit();
+      } catch (err) {
+        console.error("Erro a carregar mensagens:", err);
+      }
+    }
+
+    // Atualiza as mensagens a cada 30s
+    setInterval(loadMessages, 30000);
+    loadMessages();
   </script>
 </body>
 
