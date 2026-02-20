@@ -129,15 +129,6 @@
           });
         }).observe(doc.body, { childList: true, subtree: true });
 
-        // encolher a letra da hora um bocadinho às terças feiras pq a tabela tem muita informação
-        const today = new Date().getDay(); // 2 = terça
-        if (today === 2) {
-          doc.querySelectorAll("td.td_lateral").forEach(td => {
-            td.style.fontSize = "9px";     // era 10px
-            td.style.lineHeight = "12px";
-          });
-        }
-
         scaleToFit();
         window.addEventListener("resize", scaleToFit);
       };
