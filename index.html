@@ -103,13 +103,10 @@
   <iframe id="viewer"></iframe>
   <img id="weekendImg" src="imgs/ispgaya.jpg">
   <script>
-    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn"), messagesContainer = document.getElementById("messagesContainer");
-
+    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn"), messagesContainer = document.getElementById("messagesContainer"); let autoScrollInterval = null; let autoScrollTimeout = null;
     const jsDayToFileDay = d => d ? d > 6 ? null : d - 1 : null;
-
     async function getTodayUrl() {
-      const fileDay = jsDayToFileDay(new Date().getDay());
-      if (fileDay === null) return null;
+      const fileDay = jsDayToFileDay(new Date().getDay()); if (fileDay === null) return null;
       try { const res = await fetch(`/latest?day=${fileDay}`); if (!res.ok) return null; const data = await res.json(); return data.url; } catch { return null; }
     }
 
@@ -118,25 +115,14 @@
       if (!url) { msg.style.display = "none"; viewer.style.display = "none"; document.getElementById("weekendImg").style.display = "block"; return; }
       document.getElementById("weekendImg").style.display = "none"; msg.style.display = "none"; viewer.src = `/proxy?url=${encodeURIComponent(url)}&r=${Date.now()}`; viewer.style.display = "block";
       viewer.onload = () => {
-        const doc = viewer.contentDocument || viewer.contentWindow.document;
-        const table = doc.querySelector("table");
-        if (!table) return;
-
-        // Remover "Data de impressão"
-        new MutationObserver(() => {
-          doc.querySelectorAll("p,div").forEach(e => {
-            /Data de impressão/i.test(e.textContent) && e.remove();
-          });
-        }).observe(doc.body, { childList: true, subtree: true });
-
-        scaleToFit();
-        window.addEventListener("resize", scaleToFit);
+        const doc = viewer.contentDocument || viewer.contentWindow.document; const table = doc.querySelector("table"); if (!table) return;
+        new MutationObserver(() => { doc.querySelectorAll("p,div").forEach(e => { /Data de impressão/i.test(e.textContent) && e.remove(); }); }).observe(doc.body, { childList: true, subtree: true });
+        scaleToFit(); window.addEventListener("resize", scaleToFit);
       };
     }
 
     function openFullscreen() {
-      const e = document.documentElement;
-      e.requestFullscreen?.() || e.webkitRequestFullscreen?.() || e.msRequestFullscreen?.();
+      const e = document.documentElement; e.requestFullscreen?.() || e.webkitRequestFullscreen?.() || e.msRequestFullscreen?.();
       setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
     }
 
@@ -162,39 +148,38 @@
 
     function scaleToFit() {
       const table = viewer.contentDocument?.querySelector("table"); if (!table) return;
-      table.style.transform = "none"; table.style.display = "block"; table.style.margin = "0 auto";
-      const availableHeight = viewer.clientHeight - messagesContainer.offsetHeight;
-      const scaleY = Math.min(availableHeight / table.scrollHeight, 1);
-      table.style.transformOrigin = "top left"; table.style.transform = `scaleY(${scaleY})`;
+      table.style.transform = "none"; table.style.transformOrigin = "top left"; table.style.display = "block"; table.style.margin = "0 auto";
+      const rows = table.querySelectorAll("tr"); const cells = table.querySelectorAll("td"); if (!rows.length) return;
+      cells.forEach(td => { td.style.paddingTop = "0px"; td.style.paddingBottom = "0px"; });
+      const availableHeight = viewer.clientHeight - messagesContainer.offsetHeight; const naturalHeight = table.scrollHeight;
+      if (naturalHeight < availableHeight) { const extraSpace = availableHeight - naturalHeight; const extraPerRow = extraSpace / rows.length; cells.forEach(td => { td.style.paddingTop = (extraPerRow / 2) + "px"; td.style.paddingBottom = (extraPerRow / 2) + "px"; }); return; }
+      cells.forEach(td => { td.style.paddingTop = "0px"; td.style.paddingBottom = "0px"; });
+      const scaleY = availableHeight / table.scrollHeight; table.style.transform = `scaleY(${scaleY})`;
     }
 
-    btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; messagesContainer.style.display = "flex"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); });
+    function startAutoScroll() {
+      if (autoScrollInterval) clearInterval(autoScrollInterval); if (autoScrollTimeout) clearTimeout(autoScrollTimeout); messagesContainer.scrollTop = 0;
+      const hasOverflow = messagesContainer.scrollHeight > messagesContainer.clientHeight; if (!hasOverflow) return;
+      const speed = 0.3; const intervalTime = 16; let acumulatedScroll = 0;
+      autoScrollInterval = setInterval(() => {
+        acumulatedScroll += speed; messagesContainer.scrollTop = Math.floor(acumulatedScroll);
+        if (messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight) {
+          clearInterval(autoScrollInterval);
+          autoScrollTimeout = setTimeout(() => { messagesContainer.scrollTop = 0; startAutoScroll(); }, 3000);
+        }
+      }, intervalTime);
+    }
 
+    btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; messagesContainer.style.display = "flex"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); startAutoScroll(); });
     async function loadMessages() {
       try {
-        const res = await fetch("http://localhost:3001/public/messages");
-        const messages = await res.json();
-
-        messagesContainer.innerHTML = "";
-
-        messages.forEach(msg => {
-          const p = document.createElement("div");
-          p.textContent = msg.text;
-          p.style.padding = "1px 8px";
-          p.style.borderBottom = "1px solid rgba(255,255,255,0.3)";
-          messagesContainer.appendChild(p);
-        });
-
-        // Ajustar tabela para não sobrepor mensagens
-        scaleToFit();
-      } catch (err) {
-        console.error("Erro a carregar mensagens:", err);
-      }
+        const res = await fetch("http://localhost:3001/public/messages"); const messages = await res.json(); messagesContainer.innerHTML = "";
+        messages.forEach(msg => { const p = document.createElement("div"); p.textContent = msg.text; p.style.padding = "1px 8px"; p.style.borderBottom = "1px solid rgba(255,255,255,0.3)"; messagesContainer.appendChild(p); });
+        scaleToFit(); startAutoScroll();
+      } catch (err) { console.error("Erro a carregar mensagens:", err); }
     }
 
-    // Atualiza as mensagens a cada 30s
-    setInterval(loadMessages, 30000);
-    loadMessages();
+    loadMessages(); setInterval(loadMessages, 30000);
   </script>
 </body>
 
