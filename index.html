@@ -75,8 +75,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      color: #fff;
+      background: #f29f52;
+      color: #000000;
       font-size: 0.85rem;
       padding: 5px;
       box-sizing: border-box;
@@ -91,7 +91,7 @@
       white-space: pre-wrap;
       word-break: break-word;
       padding: 1px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      border-bottom: 1px solid rgb(0, 0, 0);
     }
   </style>
 </head>
@@ -174,7 +174,7 @@
     async function loadMessages() {
       try {
         const res = await fetch("http://localhost:3001/public/messages"); const messages = await res.json(); messagesContainer.innerHTML = "";
-        messages.forEach(msg => { const p = document.createElement("div"); p.textContent = msg.text; p.style.padding = "1px 8px"; p.style.borderBottom = "1px solid rgba(255,255,255,0.3)"; messagesContainer.appendChild(p); });
+        messages.forEach(msg => { const p = document.createElement("div"); p.textContent = msg.text; p.style.padding = "1px 8px"; p.style.borderBottom = "1px solid #000"; messagesContainer.appendChild(p); });
         scaleToFit(); startAutoScroll();
       } catch (err) { console.error("Erro a carregar mensagens:", err); }
     }
