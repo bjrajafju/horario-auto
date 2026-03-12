@@ -16,6 +16,10 @@ const openBrowser = () => {
 // Servir ficheiros locais (index.html, ajuste.css, etc.)
 app.use(express.static(__dirname_actual));
 
+app.get("/style_normal_color.css", (req, res) => {
+    res.type("text/css").send("");
+});
+
 // Proxy para buscar página externa e injetar CSS
 app.get("/proxy", async (req, res) => {
     const targetUrl = req.query.url;
