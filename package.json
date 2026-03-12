@@ -18,14 +18,13 @@
         "scripts": [
             "proxy.js"
         ],
+        "targets": [
+            "node18-win-x64"
+        ],
         "assets": [
             "index.html",
             "ajuste.css",
-            "node_modules/express/**/*",
-            "node_modules/node-fetch/**/*"
-        ],
-        "targets": [
-            "node18-win-x64"
+            "imgs/**/*"
         ]
     }
 }
