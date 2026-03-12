@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 
 const app = express();
 const PORT = 3000;
-const __dirname_actual = path.resolve();
+const __dirname_actual = process.cwd();
 
 // Abrir browser automaticamente
 const openBrowser = () => {
@@ -30,7 +30,7 @@ app.get("/proxy", async (req, res) => {
         // Injetar CSS
         html = html.replace(
             /<head[^>]*>/i,
-            `<head><link rel="stylesheet" href="/ajuste.css">`
+            `<head><link rel="stylesheet" href="/ajuste.css">`,
         );
 
         res.set("Content-Type", "text/html");

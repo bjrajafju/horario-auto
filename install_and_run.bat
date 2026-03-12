@@ -23,7 +23,7 @@ if not exist "%BASE_DIR%node_modules" (
     echo Instalando dependências...
     "%NODE_EXE%" "%NPM_CLI%" install
     if %errorlevel% neq 0 (
-        echo ⚠️ Erro a instalar dependências.
+        echo Erro a instalar dependências.
         pause
         exit /b
     )
@@ -34,7 +34,7 @@ echo A iniciar o servidor...
 "%NODE_EXE%" "%BASE_DIR%proxy.js" > "%BASE_DIR%server_output.log" 2>&1
 
 echo.
-echo [✅] Servidor iniciado.
+echo Servidor iniciado.
 echo Logs gravados em: server_output.log
 echo Pressiona qualquer tecla para sair...
 pause

@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
   <title>Horário Automático ISPGAYA</title>
   <style>
     html,
@@ -103,7 +104,7 @@
   <iframe id="viewer"></iframe>
   <img id="weekendImg" src="imgs/ispgaya.jpg">
   <script>
-    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn"), messagesContainer = document.getElementById("messagesContainer"); let autoScrollInterval = null; let autoScrollTimeout = null;
+    const viewer = document.getElementById("viewer"), msg = document.getElementById("msg"), btn = document.getElementById("openBtn"), messagesContainer = document.getElementById("messagesContainer"); let autoScrollInterval = null; let autoScrollTimeout = null; let lastRefreshSeen = 0;
     const jsDayToFileDay = d => d ? d > 6 ? null : d - 1 : null;
     async function getTodayUrl() {
       const fileDay = jsDayToFileDay(new Date().getDay()); if (fileDay === null) return null;
@@ -173,13 +174,20 @@
     btn.addEventListener("click", async () => { openFullscreen(); btn.style.display = "none"; messagesContainer.style.display = "flex"; await updateSchedule(); scheduleMidnightUpdate(); scheduleAutoRefresh(); startAutoScroll(); });
     async function loadMessages() {
       try {
-        const res = await fetch("http://localhost:3001/public/messages"); const messages = await res.json(); messagesContainer.innerHTML = "";
+        const res = await fetch("http://localhost:3001/api/messages"); const messages = await res.json(); messagesContainer.innerHTML = "";
         messages.forEach(msg => { const p = document.createElement("div"); p.textContent = msg.text; p.style.padding = "1px 8px"; p.style.borderBottom = "1px solid #000"; messagesContainer.appendChild(p); });
         scaleToFit(); startAutoScroll();
       } catch (err) { console.error("Erro a carregar mensagens:", err); }
     }
 
-    loadMessages(); setInterval(loadMessages, 30000);
+    async function checkManualRefresh() {
+      try {
+        const res = await fetch("http://localhost:3001/api/refreshSchedule"); if (!res.ok) return; const data = await res.json();
+        if (data.lastRefresh > lastRefreshSeen) { lastRefreshSeen = data.lastRefresh; console.log("Refresh manual recebido"); updateSchedule(); }
+      } catch (err) { console.error("Erro ao verificar refresh manual:", err); }
+    }
+
+    loadMessages(); setInterval(loadMessages, 30000); setInterval(checkManualRefresh, 5000);
   </script>
 </body>
 
